@@ -1,22 +1,34 @@
+const multer_config = require('../config/multer_config');
+
 const express = require('express');
 const router = express.Router();
+const fs = require('fs');
 
-const exec = require('child_process').exec;
+const clamav = require('clamav.js')
+const clamavScanner = clamav.createScanner('localhost', '3310')
 
-router.post('/file', (req, res, next) => {
-    if (!req.files) {
-        return res.status(400).send('No files were scanned')
+router.post('/file', multer_config.upload.single('file'), (req, res, next) => {
+    const file = req.file;
+
+    if (!file) {
+        return next({ status: 400, message: 'File is required' })
     }
 
-    console.log('===> Scanning file ...');
+    const fileStream = fs.createReadStream(file.path);
 
-    const file = req.files.file;
+    clamavScanner.scan(fileStream, (error, object, virus) => {
+        fileStream.destroy()
+        fs.unlink(file.path, () => { })
 
-    exec('clamscan' + ' ' + file, (error, stdout, stderr) => {
-        const lines = stdout.toString().split('\n')[0].split(' ')[1];
-        const virus = stdout.toString().split('\n')[7].split(' ')[2];
-
-        res.send('Scan complete');
+        if (error) {
+            next(error);
+        } else if (virus) {
+            console.log(`Scanned file ${file.originalname}, path ${file.path}: ${virus} FOUND`);
+            res.json({ infected: true, virus });
+        } else {
+            console.log(`Scanned file ${file.originalname}, path ${file.path}: OK`);
+            res.json({ infected: false });
+        }
     });
 });
 

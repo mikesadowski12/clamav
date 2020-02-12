@@ -1,7 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const fileUpload = require('express-fileupload');
+// const fileUpload = require('express-fileupload');
 
 const scan = require('./routes/scan');
 
@@ -17,7 +17,7 @@ app.use(cors());
 // Body Parser Middleware
 app.use(bodyParser.json({ limit: '10mb', extended: true }));
 
-app.use(fileUpload());
+// app.use(fileUpload());
 
 app.use('/scan', scan);
 
