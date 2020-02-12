@@ -4,8 +4,8 @@ const express = require('express');
 const router = express.Router();
 const fs = require('fs');
 
-const clamav = require('clamav.js')
-const clamavScanner = clamav.createScanner('localhost', '3310')
+const clamd = require('clamdjs')
+const clamavScanner = clamd.createScanner('localhost', '3310')
 
 router.post('/file', multer_config.upload.single('file'), (req, res, next) => {
     const file = req.file;
@@ -16,7 +16,7 @@ router.post('/file', multer_config.upload.single('file'), (req, res, next) => {
 
     const fileStream = fs.createReadStream(file.path);
 
-    clamavScanner.scan(fileStream, (error, object, virus) => {
+    clamavScanner.scanStream(fileStream, (error, object, virus) => {
         fileStream.destroy()
         fs.unlink(file.path, () => { })
 
